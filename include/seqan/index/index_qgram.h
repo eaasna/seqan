@@ -1241,21 +1241,32 @@ _qgramFillSuffixArray(
             assignValueI2(localPos, 0);
 
             TIterator itText = begin(sequence, Standard());
+            TSize bktNo = getBucket(bucketMap, hashNext(shape, itText)) + 1;
             if (TWithConstraints::VALUE) {
-                TSize bktNo = getBucket(bucketMap, hash(shape, itText)) + 1;                    // first hash
+//                TSize bktNo = bktNo;                    // first hash
                 if (dir[bktNo] != (TSize)-1) sa[dir[bktNo]++] = localPos;                        // if bucket is enabled
             } else
-                sa[dir[getBucket(bucketMap, hash(shape, itText)) + 1]++] = localPos;            // first hash
+                sa[dir[bktNo]++] = localPos;            // first hash
 
             for(TSize i = 1; i < num_qgrams; ++i)
             {
                 ++itText;
+                auto nextHash = hashNext(shape, itText);
+                bktNo = getBucket(bucketMap, nextHash) + 1;
                 assignValueI2(localPos, i);
                 if (TWithConstraints::VALUE) {
-                    TSize bktNo = getBucket(bucketMap, hashNext(shape, itText)) + 1;            // next hash
+                    //TSize bktNo = getBucket(bucketMap, nextHash) + 1;            // next hash
                     if (dir[bktNo] != (TSize)-1) sa[dir[bktNo]++] = localPos;                    // if bucket is enabled
                 } else
-                    sa[dir[getBucket(bucketMap, hashNext(shape, itText)) + 1]++] = localPos;    // next hash
+                    sa[dir[bktNo]++] = localPos;    // next hash
+
+                if ((bktNo >= 14231) && (bktNo < 14239))
+                {
+                    std::cerr << "localPos\t" << localPos << '\n'; 
+                    std::cerr << "getBucket(bucketMap, nextHash) + 1\t" << bktNo << '\n';
+                    std::cerr << "dir[getBucket(bucketMap, nextHash) + 1]\t" << dir[bktNo] << '\n';
+                    std::cerr << "sa[dir[getBucket(bucketMap, nextHash) + 1]]\t" << sa[dir[bktNo] - 1] << '\n';
+                }
             }
         }
     else

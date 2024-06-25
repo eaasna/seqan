@@ -981,6 +981,7 @@ inline void _patternInit(Pattern<TIndex, Swift<TSpec> > &pattern, TFloat errorRa
 */
 }
 
+#include <concepts>
 
 /////////////////////////////////////////////////////////////
 // Creates a new hit and appends it to the finders hit list
@@ -1062,9 +1063,33 @@ inline bool _swiftMultiProcessQGram(
     TIndex const &index = host(pattern);
 
     // create an iterator over the positions of the q-gram occurrences in pattern
+    auto bktNr = getBucket(index.bucketMap, hash);
     TSAIter saBegin = begin(indexSA(index), Standard());
-    TSAIter occ = saBegin + indexDir(index)[getBucket(index.bucketMap, hash)];
-    TSAIter occEnd = saBegin + indexDir(index)[getBucket(index.bucketMap, hash) + 1];
+    TSAIter occ = saBegin + indexDir(index)[bktNr];
+    TSAIter occEnd = saBegin + indexDir(index)[getBucket(index.bucketMap, hash) + 1];    
+
+    if (occ > occEnd)
+    {
+        for (auto b = bktNr - 10; b < bktNr + 10; b++)
+        {
+            TSAIter occ = saBegin + indexDir(index)[b];
+            TSAIter occEnd = saBegin + indexDir(index)[b + 1];
+            std::cerr << "bucket\t" << b << '\t' << "occEnd - occ\t" << occEnd - occ << "\t<seqNo, pos>\t";
+                std::cerr << "<" << occ->i1 << ' ' << occ->i2 << ">\t";
+            std::cerr << '\n';
+        }   
+    }
+
+    if ((bktNr >= 14231) && (bktNr < 14239))
+    {
+        std::cerr << "hash\t" << hash << '\n';
+        std::cerr << "getBucket(index.bucketMap, hash)\t" << bktNr << '\n';
+        std::cerr << "saBegin\t" << saBegin << '\n';
+        std::cerr << "seqan2::length(indexDir(index))\t" << seqan2::length(indexDir(index)) << '\n';
+        std::cerr << "seqan2::length(index.bucketMap.qgramCode)\t" << seqan2::length(index.bucketMap.qgramCode) << '\n';
+        std::cerr << "indexDir(index)[getBucket(index.bucketMap, hash)]\t" << indexDir(index)[bktNr] << '\n';
+    }
+
     TBucketIter bktBegin = begin(pattern.buckets, Standard());
     Pair<unsigned> ndlPos;
 
@@ -1980,6 +2005,44 @@ find(
             hashNext(pattern.shape, hostIterator(hostIterator(finder)));
         }
 
+        
+        if (value(pattern.shape) == 5241266670017892656) 
+        {
+            std::cerr << "ref seq\n" <<  container(finder) << '\n';
+            std::vector<Dna> str_seq;
+
+            for (size_t i{0}; i < 32; i++)
+            {
+                char n{'N'};
+                switch ((hostIterator(hostIterator(finder)) + i)->value)
+                {
+                    case 0:
+                    {
+                        n = 'A';
+                        break;
+                    }
+                    case 1:
+                    {
+                        n = 'C';
+                        break;
+                    }
+                    case 2:
+                    {
+                        n = 'G';
+                        break;
+                    }    
+                    case 3:
+                    {
+                        n = 'T';
+                        break;
+                    }       
+                }
+                
+                std::cerr << n;
+            }
+
+            std::cerr << '\n';
+        }
         if (_swiftMultiProcessQGram(finder, pattern, value(pattern.shape)))
         {
             _copySwiftHit(finder, pattern);

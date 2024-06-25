@@ -270,6 +270,7 @@ namespace seqan2
         // otherwise do quadratic probing to avoid clustering (Cormen 1998)
         TSize delta = 0;
         (void)delta;
+
         while (bucketMap.qgramCode[h1] != code && bucketMap.qgramCode[h1] != TBucketMap::EMPTY)
         {
 #ifdef SEQAN_OPENADDRESSING_COMPACT
@@ -278,6 +279,13 @@ namespace seqan2
             h1 = (h1 + delta + 1) & hlen;       // for power2-sized tables the (i*i+i)/2 probing guarantees the same
             ++delta;
 #endif
+            if (code == 5241266670017892656)
+            {
+                if (bucketMap.qgramCode[h1] == code)
+                    std::cerr << "bucket already exists for code\n";
+                if (bucketMap.qgramCode[h1] == TBucketMap::EMPTY)
+                    std::cerr << "chosen bucket is empty\n";
+            }
         }
         return h1;
     }
