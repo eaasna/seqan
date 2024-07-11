@@ -1070,24 +1070,20 @@ inline bool _swiftMultiProcessQGram(
 
     if (occ > occEnd)
     {
-        for (auto b = bktNr - 10; b < bktNr + 10; b++)
-        {
-            TSAIter occ = saBegin + indexDir(index)[b];
-            TSAIter occEnd = saBegin + indexDir(index)[b + 1];
-            std::cerr << "bucket\t" << b << '\t' << "occEnd - occ\t" << occEnd - occ << "\t<seqNo, pos>\t";
-                std::cerr << "<" << occ->i1 << ' ' << occ->i2 << ">\t";
-            std::cerr << '\n';
-        }   
-    }
-
-    if ((bktNr >= 14231) && (bktNr < 14239))
-    {
         std::cerr << "hash\t" << hash << '\n';
         std::cerr << "getBucket(index.bucketMap, hash)\t" << bktNr << '\n';
         std::cerr << "saBegin\t" << saBegin << '\n';
         std::cerr << "seqan2::length(indexDir(index))\t" << seqan2::length(indexDir(index)) << '\n';
         std::cerr << "seqan2::length(index.bucketMap.qgramCode)\t" << seqan2::length(index.bucketMap.qgramCode) << '\n';
         std::cerr << "indexDir(index)[getBucket(index.bucketMap, hash)]\t" << indexDir(index)[bktNr] << '\n';
+
+        std::cerr << "bucket\toccEnd - occ\t<seqNo, pos>\n";
+        for (auto b = bktNr - 10; b < bktNr + 10; b++)
+        {
+            TSAIter occ = saBegin + indexDir(index)[b];
+            TSAIter occEnd = saBegin + indexDir(index)[b + 1];
+            std::cerr << b << '\t' << occEnd - occ << "\t<" << occ->i1 << ' ' << occ->i2 << ">\n";
+        }   
     }
 
     TBucketIter bktBegin = begin(pattern.buckets, Standard());

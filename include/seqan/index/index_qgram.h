@@ -1260,9 +1260,9 @@ _qgramFillSuffixArray(
                 } else
                     sa[dir[bktNo]++] = localPos;    // next hash
 
-                if ((bktNo >= 14231) && (bktNo < 14239))
+                if ((bktNo > 19540986) && (bktNo < 19541006)) || ((bktNo > 9014166) && (bktNo < 9014187))
                 {
-                    std::cerr << "localPos\t" << localPos << '\n'; 
+                    std::cerr << "<seqNo, pos>\t" << localPos << '\n'; 
                     std::cerr << "getBucket(bucketMap, nextHash) + 1\t" << bktNo << '\n';
                     std::cerr << "dir[getBucket(bucketMap, nextHash) + 1]\t" << dir[bktNo] << '\n';
                     std::cerr << "sa[dir[getBucket(bucketMap, nextHash) + 1]]\t" << sa[dir[bktNo] - 1] << '\n';
