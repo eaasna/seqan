@@ -1049,9 +1049,14 @@ uint64_t _qgramCountQGrams(TDir &dir, TBucketMap &bucketMap, StringSet<TString, 
 
     size_t last_hash_count{0};
     uint64_t last_hash{0};
+    uint64_t last_hash_pos_in_dir{0};
+    size_t random_hash_count{0};
+    uint64_t random_hash{0};
+    uint64_t random_hash_pos_in_dir{0};
     auto dir_copy = dir;
     std::string last_kmer;
     last_kmer.resize(shape.span, 'T');
+    std::string random_kmer{"AAAAAAAATTTTATTTCGAAATCGAAAAGGCT"}; // that appears in the fly genome
     if (stepSize == 1)
         for(unsigned seqNo = 0; seqNo < length(stringSet); ++seqNo)
         {
@@ -1100,7 +1105,12 @@ uint64_t _qgramCountQGrams(TDir &dir, TBucketMap &bucketMap, StringSet<TString, 
                         std::cerr << "Hash collision with k-mer \t" << kmer_str << '\n';
                     }
                 }
-                
+                if (kmer_str == random_kmer)
+                {
+                    random_hash = next_hash;
+                    random_hash_count++;
+                }
+
                 // std::cerr << "last hash=\t" << next_hash << '\n';
                 /*
                 auto currentBucket = requestBucket(bucketMap, next_hash);
@@ -1116,7 +1126,12 @@ uint64_t _qgramCountQGrams(TDir &dir, TBucketMap &bucketMap, StringSet<TString, 
                 */
                 //auto old_count = dir[getBucket(bucketMap, next_hash)];
                 
-                ++dir[requestBucket(bucketMap, next_hash)];
+                auto bucketPos = requestBucket(bucketMap, next_hash);
+                ++dir[bucketPos];
+                if (kmer_str == last_kmer)
+                    last_hash_pos_in_dir = bucketPos; 
+                if (kmer_str == random_kmer)
+                    random_hash_pos_in_dir = bucketPos;
 
                 /*
                 if (dir[getBucket(bucketMap, next_hash)] < old_count)
@@ -1140,7 +1155,9 @@ uint64_t _qgramCountQGrams(TDir &dir, TBucketMap &bucketMap, StringSet<TString, 
         }
 
     std::cerr << "kmer size\t" << shape.span << '\n';
+    std::cerr << "last kmer\t" << last_kmer << '\n';
     std::cerr << "Counted last hash\t" << last_hash_count << '\n';
+    std::cerr << "Placed last hash at\t" << last_hash_pos_in_dir << '\n';
     std::cerr << "Previous bucket before\t" << dir_copy[getBucket(bucketMap, last_hash) - 1] << '\n';
     std::cerr << "Previous bucket after\t" << dir[getBucket(bucketMap, last_hash) - 1] << '\n';
     std::cerr << "Last hash count dir before\t" << dir_copy[getBucket(bucketMap, last_hash)] << '\n';
@@ -1148,6 +1165,17 @@ uint64_t _qgramCountQGrams(TDir &dir, TBucketMap &bucketMap, StringSet<TString, 
     std::cerr << "Last kmer hash\t" << getBucket(bucketMap, last_hash) << '\n'; 
     std::cerr << "Next bucket before\t" << dir_copy[getBucket(bucketMap, last_hash) + 1] << '\n';
     std::cerr << "Next bucket after\t" << dir[getBucket(bucketMap, last_hash) + 1] << '\n';
+
+    std::cerr << "random kmer\t" << random_kmer << '\n';
+    std::cerr << "Counted random hash\t" << random_hash_count << '\n';
+    std::cerr << "Placed random hash at\t" << random_hash_pos_in_dir << '\n';
+    std::cerr << "Previous bucket before\t" << dir_copy[getBucket(bucketMap, random_hash) - 1] << '\n';
+    std::cerr << "Previous bucket after\t" << dir[getBucket(bucketMap, random_hash) - 1] << '\n';
+    std::cerr << "Random hash count dir before\t" << dir_copy[getBucket(bucketMap, random_hash)] << '\n';
+    std::cerr << "Random hash count dir after\t" << dir[getBucket(bucketMap, random_hash)] << '\n';
+    std::cerr << "Random kmer hash\t" << getBucket(bucketMap, random_hash) << '\n'; 
+    std::cerr << "Next bucket before\t" << dir_copy[getBucket(bucketMap, random_hash) + 1] << '\n';
+    std::cerr << "Next bucket after\t" << dir[getBucket(bucketMap, random_hash) + 1] << '\n';
 
     uint64_t max_count{0};
     for (auto & count : dir)

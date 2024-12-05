@@ -220,6 +220,7 @@ namespace seqan2
         h1 &= hlen;
 #endif
         // was the entry empty or occupied by our code?
+        //!TODO: for the last k-mer requestBucket and getBucket result in different positions in the Dir 
         THashValue currentCode = atomicCas(bucketMap.qgramCode[h1], TBucketMap::EMPTY, code, parallelTag);
         if (currentCode == TBucketMap::EMPTY || currentCode == code)
             return h1;
