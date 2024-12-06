@@ -206,6 +206,8 @@ namespace seqan2
 	if (code == 18446744073709551615 || code == 280647662174375)
 	    interest = true;
 
+	bool collision{false};
+
         typedef BucketMap<THashValue> TBucketMap;
         typedef unsigned long TSize;
         // get size of the index
@@ -242,7 +244,10 @@ namespace seqan2
 		std::cerr << "bucketMap.qgramCode[h1]\t" << bucketMap.qgramCode[h1] << '\n';
 	}
         // was the entry empty or occupied by our code?
-        //!TODO: for the last k-mer requestBucket and getBucket result in different positions in the Dir 
+        //if bukcetMap.qgramCode[h1] is empty
+	//	place code into bucketMap
+	//else
+	//	return code already in bucketMap
         THashValue currentCode = atomicCas(bucketMap.qgramCode[h1], TBucketMap::EMPTY, code, parallelTag);
 	if (interest)
 	{
@@ -252,6 +257,16 @@ namespace seqan2
         if (currentCode == TBucketMap::EMPTY || currentCode == code)
             return h1;
 
+	if (code != 18446744073709551615 && h1 == 41)
+		collision = true;
+	if (collision || interest)
+	{
+		std::cerr << "Hash collision\n";
+		std::cerr << "code\t" << code << '\n';
+		std::cerr << "h1\t" << h1 << '\n';
+		std::cerr << "currentCode\t" << currentCode << '\n';
+		std::cerr << "bucketMap.qgramCode[h1]\t" << bucketMap.qgramCode[h1] << '\n';
+	}
         // if not we have a collision -> probe for our code or an empty entry
         //
         // do linear probing if we need to save memory (when SEQAN_OPENADDRESSING_COMPACT is defined)
