@@ -202,6 +202,10 @@ namespace seqan2
     inline THashValue
     requestBucket(BucketMap<THashValue> &bucketMap, THashValue2 code, Tag<TParallelTag> parallelTag)
     {
+	bool interest{false}, collision{false};
+	if (code == 18446744073709551615 || code == 280647662174375)
+	    interest = true;
+
         typedef BucketMap<THashValue> TBucketMap;
         typedef unsigned long TSize;
         // get size of the index
@@ -209,9 +213,9 @@ namespace seqan2
         // check whether bucket map is disabled and
         // where the hash should be found if no collision took place before
         TSize hlen = length(bucketMap.qgramCode);
-        if (hlen == 0ul) return code;
-
+	if (hlen == 0ul) return code;
         TSize h1 = _hashFunction(bucketMap, code);
+
 #ifdef SEQAN_OPENADDRESSING_COMPACT
         --hlen;
         h1 %= hlen;
@@ -219,11 +223,34 @@ namespace seqan2
         hlen -= 2;
         h1 &= hlen;
 #endif
+	if (interest)
+	{
+        std::cerr << "requestBucket\n";
+		std::cerr << "code\t" << code << '\n';
+		std::cerr << "h1\t" << h1 << '\n';
+		std::cerr << "hlen\t" << hlen << '\n';
+		std::cerr << "bucketMap.qgramCode[h1]\t" << bucketMap.qgramCode[h1] << '\n';
+	}
         // was the entry empty or occupied by our code?
+        //if bukcetMap.qgramCode[h1] is empty
+	//	place code into bucketMap
+	//else
+	//	return code already in bucketMap
         THashValue currentCode = atomicCas(bucketMap.qgramCode[h1], TBucketMap::EMPTY, code, parallelTag);
+	if (interest)
+	{
+		std::cerr << "currentCode\t" << currentCode << '\n';
+		std::cerr << "bucketMap.qgramCode[h1]\t" << bucketMap.qgramCode[h1] << '\n';
+	}
         if (currentCode == TBucketMap::EMPTY || currentCode == code)
             return h1;
 
+	if (code != 18446744073709551615 && h1 == 41)
+		collision = true;
+    if (interest)
+        std::cerr << "Last kmer probing\n";
+    if (collision)
+        std::cerr << "Hash collision with code\t" << code << '\n';
         // if not we have a collision -> probe for our code or an empty entry
         //
         // do linear probing if we need to save memory (when SEQAN_OPENADDRESSING_COMPACT is defined)
@@ -238,7 +265,25 @@ namespace seqan2
             ++delta;
 #endif
             currentCode = atomicCas(bucketMap.qgramCode[h1], TBucketMap::EMPTY, code, parallelTag);
+
+            /*
+            if (interest)
+            {
+                std::cerr << "h1\t" << h1 << '\n';
+                std::cerr << "delta\t" << delta << '\n';
+                std::cerr << "hlen\t" << hlen << '\n';
+                std::cerr << "currentCode\t" << currentCode << '\n';
+            }
+            */
+
         } while (currentCode != TBucketMap::EMPTY && currentCode != code);
+
+        if (interest)
+        {
+            std::cerr << "Final hlen\t" << hlen << '\n';
+            std::cerr << "Final delta\t" << delta << '\n';
+            std::cerr << "Final h1\t" << h1 << '\n';
+        }
         return h1;
     }
 
@@ -249,6 +294,10 @@ namespace seqan2
         typedef BucketMap<THashValue> TBucketMap;
         typedef unsigned long TSize;
         // get size of the index
+
+        bool interest{false}, collision{false};
+	    if (code == 18446744073709551615 || code == 280647662174375)
+	        interest = true;
 
         // check whether bucket map is disabled and
         // where the hash should be found if no collision took place before
@@ -264,10 +313,26 @@ namespace seqan2
         h1 &= hlen;
 #endif
 
+	    if (interest)
+	    {
+            std::cerr << "getBucket\n";
+	    	std::cerr << "code\t" << code << '\n';
+	    	std::cerr << "h1\t" << h1 << '\n';
+	    	std::cerr << "hlen\t" << hlen << '\n';
+	    	std::cerr << "bucketMap.qgramCode[h1]\t" << bucketMap.qgramCode[h1] << '\n';
+	    }
         // probe for our code or an empty entry
         //
         // do linear probing if we need to save memory (when SEQAN_OPENADDRESSING_COMPACT is defined)
         // otherwise do quadratic probing to avoid clustering (Cormen 1998)
+        if (code != 18446744073709551615 && h1 == 41)
+		    collision = true;
+
+        if (interest)
+            std::cerr << "Last kmer probing\n";
+        if (collision)
+            std::cerr << "Hash collision with code\t" << code << '\n';
+
         TSize delta = 0;
         (void)delta;
         while (bucketMap.qgramCode[h1] != code && bucketMap.qgramCode[h1] != TBucketMap::EMPTY)
@@ -279,6 +344,13 @@ namespace seqan2
             ++delta;
 #endif
         }
+        if (interest)
+        {
+            std::cerr << "Final hlen\t" << hlen << '\n';
+            std::cerr << "Final delta\t" << delta << '\n';
+            std::cerr << "Final h1\t" << h1 << '\n';
+        }
+            
         return h1;
     }
 
