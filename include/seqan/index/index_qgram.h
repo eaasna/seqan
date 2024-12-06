@@ -1162,7 +1162,8 @@ uint64_t _qgramCountQGrams(TDir &dir, TBucketMap &bucketMap, StringSet<TString, 
     std::cerr << "Previous bucket after\t" << dir[getBucket(bucketMap, last_hash) - 1] << '\n';
     std::cerr << "Last hash count dir before\t" << dir_copy[getBucket(bucketMap, last_hash)] << '\n';
     std::cerr << "Last hash count dir after\t" << dir[getBucket(bucketMap, last_hash)] << '\n';
-    std::cerr << "Last kmer hash\t" << getBucket(bucketMap, last_hash) << '\n'; 
+    std::cerr << "Last kmer hash1\t" << last_hash << '\n'; 
+    std::cerr << "Last kmer hash2\t" << getBucket(bucketMap, last_hash) << '\n'; 
     std::cerr << "Next bucket before\t" << dir_copy[getBucket(bucketMap, last_hash) + 1] << '\n';
     std::cerr << "Next bucket after\t" << dir[getBucket(bucketMap, last_hash) + 1] << '\n';
 
@@ -1173,7 +1174,8 @@ uint64_t _qgramCountQGrams(TDir &dir, TBucketMap &bucketMap, StringSet<TString, 
     std::cerr << "Previous bucket after\t" << dir[getBucket(bucketMap, random_hash) - 1] << '\n';
     std::cerr << "Random hash count dir before\t" << dir_copy[getBucket(bucketMap, random_hash)] << '\n';
     std::cerr << "Random hash count dir after\t" << dir[getBucket(bucketMap, random_hash)] << '\n';
-    std::cerr << "Random kmer hash\t" << getBucket(bucketMap, random_hash) << '\n'; 
+    std::cerr << "Random kmer hash1\t" << random_hash << '\n';
+    std::cerr << "Random kmer hash2\t" << getBucket(bucketMap, random_hash) << '\n'; 
     std::cerr << "Next bucket before\t" << dir_copy[getBucket(bucketMap, random_hash) + 1] << '\n';
     std::cerr << "Next bucket after\t" << dir[getBucket(bucketMap, random_hash) + 1] << '\n';
 

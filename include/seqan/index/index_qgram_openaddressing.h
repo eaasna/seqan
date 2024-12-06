@@ -202,6 +202,10 @@ namespace seqan2
     inline THashValue
     requestBucket(BucketMap<THashValue> &bucketMap, THashValue2 code, Tag<TParallelTag> parallelTag)
     {
+	bool interest{false};
+	if (code == 18446744073709551615 || code == 280647662174375)
+	    interest = true;
+
         typedef BucketMap<THashValue> TBucketMap;
         typedef unsigned long TSize;
         // get size of the index
@@ -209,19 +213,42 @@ namespace seqan2
         // check whether bucket map is disabled and
         // where the hash should be found if no collision took place before
         TSize hlen = length(bucketMap.qgramCode);
-        if (hlen == 0ul) return code;
-
+	if (hlen == 0ul) return code;
         TSize h1 = _hashFunction(bucketMap, code);
+	if (interest)
+	{
+		std::cerr << "code\t" << code << '\n';
+		std::cerr << "h1\t" << h1 << '\n';
+	}
 #ifdef SEQAN_OPENADDRESSING_COMPACT
         --hlen;
         h1 %= hlen;
+	if (interest)
+	{
+		std::cerr << "--hlen\t" << hlen << '\n';
+		std::cerr << "h1 %= hlen\t" << h1 << '\n';
+	}
 #else
         hlen -= 2;
         h1 &= hlen;
+	if (interest)
+	{
+		std::cerr << "hlen -= 2\t" << hlen << '\n';
+		std::cerr << "h1 &= hlen\t" << h1 << '\n';
+	}
 #endif
+	if (interest)
+	{
+		std::cerr << "bucketMap.qgramCode[h1]\t" << bucketMap.qgramCode[h1] << '\n';
+	}
         // was the entry empty or occupied by our code?
         //!TODO: for the last k-mer requestBucket and getBucket result in different positions in the Dir 
         THashValue currentCode = atomicCas(bucketMap.qgramCode[h1], TBucketMap::EMPTY, code, parallelTag);
+	if (interest)
+	{
+		std::cerr << "currentCode\t" << currentCode << '\n';
+		std::cerr << "bucketMap.qgramCode[h1]\t" << bucketMap.qgramCode[h1] << '\n';
+	}
         if (currentCode == TBucketMap::EMPTY || currentCode == code)
             return h1;
 
