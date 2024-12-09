@@ -329,9 +329,18 @@ namespace seqan2
 		    collision = true;
 
         if (interest)
+        {
             std::cerr << "Last kmer probing\n";
+            uint64_t empty_code = TBucketMap::EMPTY;
+            std::cerr << "EMPTY\t" << empty_code << '\n';
+        }
         if (collision)
             std::cerr << "Hash collision with code\t" << code << '\n';
+        
+        if (code == TBucketMap::EMPTY)
+        {
+            std::cerr << "Probing "
+        }
 
         TSize delta = 0;
         (void)delta;
