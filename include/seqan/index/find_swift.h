@@ -772,6 +772,7 @@ inline void _patternInit(Pattern<TIndex, Swift<TSpec> > &pattern, TFloat errorRa
 
         if (Swift<TSpec>::SEMIGLOBAL == 0)
         {
+            //!TODO: not global but local matches?
             // global matches
             TSize minLength = minLengthForAll;
             for(unsigned seqNo = 0; seqNo < seqCount; ++seqNo)
@@ -791,8 +792,12 @@ inline void _patternInit(Pattern<TIndex, Swift<TSpec> > &pattern, TFloat errorRa
                     bucketParams.threshold = pattern.params.minThreshold;
 
                 SEQAN_ASSERT_GT_MSG((1 / errorRate), span, "SWIFT only works if span < 1 / error rate!");
-                TSize errors = (TSize) floor((2 * bucketParams.threshold + span - 3) / (1 / errorRate - span));
 
+                //!TODO: what is this error count?
+                TSize errors = (TSize) floor((2 * bucketParams.threshold + span - 3) / (1 / errorRate - span));
+                std::cerr << "errorRate\t" << std::to_string(errorRate) << '\n';
+                std::cerr << "bucketParams.threshold\t" << std::to_string(bucketParams.threshold) << '\n';
+                std::cerr << "span\t" << std::to_string(span) << '\n';
 
                 // a bucket has distanceCut different positions of q-grams
                 // if a q-gram is this far or further away it can't belong to the
@@ -813,6 +818,9 @@ inline void _patternInit(Pattern<TIndex, Swift<TSpec> > &pattern, TFloat errorRa
                     bucketParams.logDelta = (TSize) ceil(log((double)errors + 1) / log(2.0));
                     if (bucketParams.logDelta < pattern.params.minLog2Delta)
                         bucketParams.logDelta = pattern.params.minLog2Delta;
+                    std::cerr << "errors\t" << errors << '\n';
+                    std::cerr << "bukcetParams.logDelta\t" << bucketParams.logDelta << '\n';
+                    throw std::runtime_error{"Done"};
                     bucketParams.delta = 1 << bucketParams.logDelta;
                     bucketParams.tabooLength = pattern.params.tabooLength;
 
@@ -886,6 +894,11 @@ inline void _patternInit(Pattern<TIndex, Swift<TSpec> > &pattern, TFloat errorRa
 
                     // delta must be a power of 2 greater then errors (define a minimal delta of 8)
                     bucketParams.logDelta = (TSize) ceil(log((double)(errors + 1)) / log(2.0));
+                    std::cerr << "length\t" << length << '\n';
+                    std::cerr << "span\t" << span << '\n';
+                    std::cerr << "errors\t" << errors << '\n';
+                    std::cerr << "bukcetParams.logDelta\t" << bucketParams.logDelta << '\n';
+                    throw std::runtime_error{"Done"};
                     if (bucketParams.logDelta < pattern.params.minLog2Delta)
                         bucketParams.logDelta = pattern.params.minLog2Delta;
                     bucketParams.delta = 1 << bucketParams.logDelta;
@@ -903,6 +916,11 @@ inline void _patternInit(Pattern<TIndex, Swift<TSpec> > &pattern, TFloat errorRa
 
                     // delta must be a power of 2 greater then seq.length + errors (define a minimal delta of 32)
                     bucketParams.logDelta = (TSize) ceil(log((double)(length - span + 1 + errors)) / log(2.0));
+                    std::cerr << "length\t" << length << '\n';
+                    std::cerr << "span\t" << span << '\n';
+                    std::cerr << "errors\t" << errors << '\n';
+                    std::cerr << "bukcetParams.logDelta\t" << bucketParams.logDelta << '\n';
+                    throw std::runtime_error{"Donw"};
                     if (bucketParams.logDelta < pattern.params.minLog2Delta)
                         bucketParams.logDelta = pattern.params.minLog2Delta;
                     bucketParams.delta = 1 << bucketParams.logDelta;
@@ -1014,7 +1032,39 @@ inline void _createHit(
     // determine width, height, and begin position in needle
     TSize width = lastInc - firstInc + length(pattern.shape);
     TSize height = width + bucketParams.delta + bucketParams.overlap;
+
+    auto const & queryInfix = seqan2::getSequenceByNo(ndlSeqNo, seqan2::indexText(seqan2::needle(pattern)));
     int64_t ndlBegin = lastInc + length(pattern.shape) - diag - height;
+    assert(ndlBegin + seqan2::beginPosition(queryInfix) >= 0);
+    assert(seqan2::beginPosition(queryInfix) + height <= seqan2::length(seqan2::host(queryInfix)));
+
+    if (ndlBegin < 0)
+    {
+        std::cerr << "Creating hit\n";
+
+        //!TODO: how are increments set?
+        std::cerr << "finder.curPos\t" << finder.curPos << '\n';
+        
+        std::cerr << "pattern.finderPosOffset\t" << pattern.finderPosOffset << '\n';
+        std::cerr << "pattern.finderLength\t" << pattern.finderLength << '\n';
+        auto const & bucketParams = _swiftBucketParams(pattern, getSeqNo(ndlSeqNo));
+
+        std::cerr << "logDelta\t" << std::to_string(bucketParams.logDelta) << '\n';
+        std::cerr << "bkt.firstIncrement\t" << bkt.firstIncrement << '\n';
+        std::cerr << "bkt.lastIncrement\t" << bkt.lastIncrement << '\n';
+        std::cerr << "hstkPos\t" << firstInc << '\n';
+        std::cerr << "ndlSeqNo\t" << ndlSeqNo << '\n';
+        std::cerr << "ndlBegin\t" << ndlBegin << '\n';
+        std::cerr << "bucketParams.delta\t" << bucketParams.delta << '\n';
+        std::cerr << "bucketParams.overlap\t" << bucketParams.overlap << '\n';
+        std::cerr << "diag\t" << diag << '\n';
+        std::cerr << "width\t" << width << '\n';
+        std::cerr << "height\t" << height << '\n';
+        std::cerr << "seqan2::beginPosition(queryInfix)\t" << seqan2::beginPosition(queryInfix) << '\n';
+        std::cerr << "seqan2::endPosition(queryInfix)\t" << seqan2::endPosition(queryInfix) << '\n';
+        
+        throw std::runtime_error{"Negative position"};
+    }
 
     // create the hit
     THit hit = {                //                              *
@@ -1032,17 +1082,6 @@ inline void _createHit(
     unsigned    bucketWidth;        // (non-diagonal) bucket width (hitLengthNeedle + delta + overlap (for diagonals))
     unsigned    hitLengthNeedle;    // length of the hit in needle
     */
-
-    std::cerr << "Creating hit\n";
-    //!TODO: how are increments set?
-    std::cerr << "pattern.finderPosOffset\t" << pattern.finderPosOffset << '\n';
-    std::cerr << "bkt.firstIncrement\t" << bkt.firstIncrement << '\n';
-    std::cerr << "bkt.lastIncrement\t" << bkt.lastIncrement << '\n';
-    std::cerr << "hstkPos\t" << firstInc << '\n';
-    std::cerr << "ndlSeqNo\t" << ndlSeqNo << '\n';
-    std::cerr << "ndlBegin\t" << ndlBegin << '\n';
-    std::cerr << "width\t" << width << '\n';
-    std::cerr << "height\t" << height << '\n';
 
     // append the hit to the finders hit list
     appendValue(finder.hits, hit);
